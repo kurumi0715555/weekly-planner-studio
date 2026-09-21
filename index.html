@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="中学校教員向けに、担当クラス・時間割・学年暦をまとめて管理し、生成前プレビューを確認して週案Excelを作成できるツールです。">
+    
+    
+    <link rel="stylesheet" href="common/css/common.css">
+    <link rel="stylesheet" href="common/css/modal.css">
+    <link rel="stylesheet" href="common/css/landscape-guard.css">
+    <link rel="stylesheet" href="css/weekly-planner-studio.css">
+    <link rel="stylesheet" href="common/vendor/fontawesome/css/fontawesome.css">
+<link rel="stylesheet" href="common/vendor/fontawesome/css/solid.css">
+<title>週案スタジオ</title>
+<link rel="stylesheet" href="oss/standalone.css">
+<script defer src="oss/standalone.js"></script>
+</head>
+
+<body data-tablet-ok="true">
+    <div class="site-wrapper">
+        <aside class="ad-left"><!-- Ads injected by common-ads.js --></aside>
+
+        <div class="container">
+            <header>
+                <h1>週案スタジオ</h1>
+                <p class="subtitle">週案の土台を管理して、必要な時にExcel化するツール</p>
+            </header>
+
+            <main>
+                <section class="studio-dashboard no-print" aria-label="現在の状態">
+                    <div class="dashboard-main">
+                        <p class="eyebrow">現在の週案</p>
+                        <h2 id="dashboardTitle">未設定の週案</h2>
+                        <p id="dashboardSummary">基本設定から入力を始めてください。</p>
+                    </div>
+                    <div class="status-grid" id="statusGrid"></div>
+                    <div class="dashboard-actions">
+                        <button class="btn btn-primary" id="btnPreviewTop">
+                            <span aria-hidden="true">✓</span> プレビューを確認
+                        </button>
+                        <button class="btn btn-secondary" id="btnSaveConfig">
+                            <span aria-hidden="true">□</span> 設定保存
+                        </button>
+                        <button class="btn btn-secondary" id="btnLoadConfig">
+                            <span aria-hidden="true">↑</span> 設定読込
+                        </button>
+                        <button class="btn btn-secondary" id="btnResetAll">
+                            <span aria-hidden="true">↻</span> 新規に戻す
+                        </button>
+                    </div>
+                </section>
+
+                <nav class="studio-tabs no-print" aria-label="編集セクション">
+                    <button class="studio-tab active" data-view="setup">基本設定</button>
+                    <button class="studio-tab" data-view="timetable">時間割</button>
+                    <button class="studio-tab" data-view="calendar">学年暦</button>
+                    <button class="studio-tab" data-view="preview">プレビュー</button>
+                </nav>
+
+                <section class="studio-view active" id="view-setup" data-view="setup">
+                    <div class="section-heading">
+                        <h2 class="section-title">基本設定</h2>
+                        <p>先生名、年度、担任、担当クラスを先に決めます。</p>
+                    </div>
+
+                    <div class="studio-columns">
+                        <div class="panel">
+                            <h3>先生と年度</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="teacherName">先生名 <span class="required">必須</span></label>
+                                    <input type="text" id="teacherName" maxlength="20" placeholder="例：山田">
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolYear">年度</label>
+                                    <select id="schoolYear" class="select-input"></select>
+                                </div>
+                            </div>
+
+                            <h3>担任クラス</h3>
+                            <label class="toggle-row">
+                                <input type="checkbox" id="hasHomeroom">
+                                <span>担任クラスがある</span>
+                            </label>
+                            <div class="form-grid compact" id="homeroomFields" hidden>
+                                <div class="form-group">
+                                    <label for="homeroomGrade">学年</label>
+                                    <select id="homeroomGrade" class="select-input">
+                                        <option value="1">1年</option>
+                                        <option value="2">2年</option>
+                                        <option value="3">3年</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="homeroomSection">組</label>
+                                    <select id="homeroomSection" class="select-input"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <h3>授業担当クラス</h3>
+                            <div class="quick-add">
+                                <div class="form-grid compact">
+                                    <div class="form-group">
+                                        <label for="addGrade">学年</label>
+                                        <select id="addGrade" class="select-input">
+                                            <option value="1">1年</option>
+                                            <option value="2">2年</option>
+                                            <option value="3">3年</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addSectionStart">組</label>
+                                        <select id="addSectionStart" class="select-input"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addSectionEnd">終了組</label>
+                                        <select id="addSectionEnd" class="select-input"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addSubject">教科</label>
+                                        <select id="addSubject" class="select-input"></select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-block" id="btnAddClass">
+                                    <span aria-hidden="true">＋</span> クラスを追加
+                                </button>
+                            </div>
+                            <div class="class-list" id="classList"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="studio-view" id="view-timetable" data-view="timetable">
+                    <div class="section-heading">
+                        <h2 class="section-title">時間割</h2>
+                        <p>週パターンを選び、各コマに授業を入れます。</p>
+                    </div>
+
+                    <div class="panel no-print">
+                        <div class="form-grid compact">
+                            <div class="form-group">
+                                <label for="rotationType">週パターン</label>
+                                <select id="rotationType" class="select-input">
+                                    <option value="single">毎週同じ</option>
+                                    <option value="AB">A週・B週</option>
+                                    <option value="ABC">A・B1・B2週</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="rotationStartGroup" hidden>
+                                <label for="rotationStartDate">A週を始める月曜日</label>
+                                <input type="date" id="rotationStartDate">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timetable-shell">
+                        <div class="week-tabs" id="weekTabs"></div>
+                        <div class="grid-tools no-print">
+                            <button class="btn btn-secondary btn-small" id="btnFillNone">空欄を持ちコマなしにする</button>
+                            <button class="btn btn-secondary btn-small" id="btnClearWeek">この週をクリア</button>
+                        </div>
+                        <div class="timetable-scroll">
+                            <table class="planner-grid" id="plannerGrid"></table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="studio-view" id="view-calendar" data-view="calendar">
+                    <div class="section-heading">
+                        <h2 class="section-title">学年暦</h2>
+                        <p>生成対象期間、祝日、長期休業を確認します。</p>
+                    </div>
+
+                    <div class="studio-columns">
+                        <div class="panel">
+                            <h3>生成対象期間</h3>
+                            <div class="form-grid compact">
+                                <div class="form-group">
+                                    <label for="termStart">開始日 <span class="required">必須</span></label>
+                                    <input type="date" id="termStart">
+                                </div>
+                                <div class="form-group">
+                                    <label for="termEnd">終了日 <span class="required">必須</span></label>
+                                    <input type="date" id="termEnd">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <h3>祝日・学校休業日</h3>
+                            <div class="event-list" id="holidayList"></div>
+                            <div class="inline-add no-print">
+                                <input type="date" id="holidayDate">
+                                <input type="text" id="holidayLabel" maxlength="30" placeholder="例：開校記念日">
+                                <button class="btn btn-secondary btn-small" id="btnAddHoliday">追加</button>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <h3>長期休業</h3>
+                            <div class="event-list" id="vacationList"></div>
+                            <div class="inline-add vacation-add no-print">
+                                <input type="text" id="vacationLabel" maxlength="30" placeholder="名称">
+                                <input type="date" id="vacationStart">
+                                <input type="date" id="vacationEnd">
+                                <button class="btn btn-secondary btn-small" id="btnAddVacation">追加</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="studio-view" id="view-preview" data-view="preview">
+                    <div class="section-heading">
+                        <h2 class="section-title">生成前プレビュー</h2>
+                        <p>Excelを作る前に、週数・除外週・入力漏れを確認します。</p>
+                    </div>
+
+                    <div class="preview-layout">
+                        <div class="panel preview-panel">
+                            <h3>チェック結果</h3>
+                            <div id="checkList" class="check-list"></div>
+                        </div>
+                        <div class="panel preview-panel">
+                            <h3>生成される週</h3>
+                            <div id="weekPreview" class="week-preview"></div>
+                        </div>
+                    </div>
+
+                    <div class="action-bar no-print">
+                        <button class="btn btn-success btn-large" id="btnGenerateBottom">
+                            <span aria-hidden="true">↓</span> Excelを作成
+                        </button>
+                    </div>
+                </section>
+
+                <div class="toast" id="toast" hidden></div>
+                <input type="file" id="configInput" accept=".json,application/json" hidden>
+
+                <div class="instructions">
+                    <h3>使い方</h3>
+                    <ol>
+                        <li><strong>基本設定</strong>：先生名、年度、担当クラスを入れます。</li>
+                        <li><strong>時間割</strong>：週パターンごとに授業を入れます。</li>
+                        <li><strong>学年暦</strong>：対象期間、祝日、長期休業を確認します。</li>
+                        <li><strong>プレビュー</strong>：生成週と入力漏れを確認してExcelを作成します。</li>
+                    </ol>
+                    <p class="note"><strong>ヒント</strong>：入力は自動保存されます。設定ファイルを保存すると別PCでも復元できます。</p>
+                </div>
+            </main>
+
+            <div class="ad-horizontal no-print">
+                <div class="ad-label">広告</div>
+                <div class="ad-horizontal-content">
+                    <p>728×90 レクタングル（大）バナー広告</p>
+                </div>
+            </div>
+
+            <footer><!-- Footer will be injected by common-footer.js --></footer>
+        </div>
+
+        <aside class="ad-right"><!-- Ads injected by common-ads.js --></aside>
+    </div>
+
+    <script src="js/exceljs.min.js"></script>
+    <script src="common/js/common-modal.js"></script>
+    
+    
+    
+    
+    
+    <script type="module" src="dist/weekly-planner-studio.js"></script>
+    <script src="common/js/landscape-guard.js"></script>
+</body>
+
+</html>
