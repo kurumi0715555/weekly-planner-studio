@@ -1,3 +1,3 @@
 # セキュリティ報告
 
-未修正の脆弱性、秘密値、個人情報を公開Issueへ投稿しないでください。[GitHub Security Advisories](https://github.com/kurumi0715555/weekly-planner-studio/security/advisories) の非公開報告機能を利用してください。
+未修正の脆弱性、秘密値、個人情報を公開Issueへ投稿しないでください。[GitHub Security Advisories](https://github.com/kurumi0715555/teacher-weekly-planner/security/advisories) の非公開報告機能を利用してください。
